@@ -1,0 +1,11 @@
+name: 'Repository Archive Action'
+description: 'Clones the current repository with --mirror, creates a tar archive, and compresses it with zstd.'
+author: 'Your Name'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+
+branding:
+  icon: 'archive'
+  color: 'blue'
