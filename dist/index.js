@@ -25684,47 +25684,87 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(9999));
 const exec = __importStar(__nccwpck_require__(8872));
+const io = __importStar(__nccwpck_require__(3357));
 const perf_hooks_1 = __nccwpck_require__(2987);
+const fs_1 = __nccwpck_require__(9896);
 async function measureExecutionTime(name, fn) {
-    core.info(` ${name}...`);
+    core.info(`🚀 ${name}...`);
     const startTime = perf_hooks_1.performance.now();
     await fn();
     const endTime = perf_hooks_1.performance.now();
     const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2);
-    core.info(` ${name} completed in ${durationInSeconds} seconds.`);
+    core.info(`✅ ${name} completed in ${durationInSeconds} seconds`);
 }
 async function run() {
     try {
+        // Get inputs
         const githubToken = core.getInput('github-token');
         const repository = process.env.GITHUB_REPOSITORY;
         if (!githubToken) {
-            throw new Error('GITHUB_TOKEN is not set.');
+            throw new Error('GitHub token is required');
         }
         if (!repository) {
-            throw new Error('GITHUB_REPOSITORY is not set.');
+            throw new Error('GITHUB_REPOSITORY environment variable is not set');
         }
         const repoUrl = `https://x-access-token:${githubToken}@github.com/${repository}.git`;
         const cloneDir = 'repo-mirror';
         const tarFile = 'repo.tar';
         const zstFile = 'repo.tar.zst';
+        // Clean up any existing files
+        if ((0, fs_1.existsSync)(cloneDir)) {
+            core.info('🧹 Cleaning up existing clone directory...');
+            await io.rmRF(cloneDir);
+        }
+        if ((0, fs_1.existsSync)(tarFile)) {
+            await io.rmRF(tarFile);
+        }
+        if ((0, fs_1.existsSync)(zstFile)) {
+            await io.rmRF(zstFile);
+        }
+        // Clone repository with --mirror
         await measureExecutionTime('Cloning repository with --mirror', async () => {
-            await exec.exec('git');
+            await exec.exec('git', ['clone', '--mirror', repoUrl, cloneDir]);
         });
+        // Create tar archive
         await measureExecutionTime('Creating tar archive', async () => {
-            await exec.exec('tar');
+            await exec.exec('tar', [
+                '-cf',
+                tarFile,
+                '-C',
+                cloneDir,
+                '.'
+            ]);
         });
+        // Compress with zstd
         await measureExecutionTime('Compressing with zstd', async () => {
-            await exec.exec('zstd', [tarFile, '-o', zstFile]);
+            await exec.exec('zstd', [
+                '--rm',
+                '-19',
+                '-T0',
+                tarFile,
+                '-o',
+                zstFile
+            ]);
+        });
+        // Get file size
+        await measureExecutionTime('Getting file information', async () => {
+            const { exitCode, stdout } = await exec.getExecOutput('ls', [
+                '-lh',
+                zstFile
+            ], { silent: true });
+            if (exitCode === 0) {
+                core.info(`📦 Output file: ${stdout.trim()}`);
+            }
         });
         core.info('🎉 Action completed successfully!');
-        core.info(`Output file: ${zstFile}`);
+        core.info(`💾 Final archive: ${zstFile}`);
     }
     catch (error) {
         if (error instanceof Error) {
-            core.setFailed(error.message);
+            core.setFailed(`❌ Action failed: ${error.message}`);
         }
         else {
-            core.setFailed('An unknown error occurred.');
+            core.setFailed('❌ An unknown error occurred');
         }
     }
 }
