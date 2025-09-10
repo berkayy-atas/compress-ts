@@ -25739,7 +25739,7 @@ async function run() {
         await measureExecutionTime('Compressing with zstd', async () => {
             await exec.exec('zstd', [
                 '--rm',
-                '-19',
+                '-10',
                 '-T0',
                 tarFile,
                 '-o',
