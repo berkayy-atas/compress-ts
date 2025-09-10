@@ -17,7 +17,7 @@ async function measureExecutionTime(
 
 async function run(): Promise<void> {
   try {
-    const githubToken = process.env.GITHUB_TOKEN;
+    const githubToken = core.getInput('github-token');
     const repository = process.env.GITHUB_REPOSITORY;
 
     if (!githubToken) {

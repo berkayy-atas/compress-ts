@@ -25695,7 +25695,7 @@ async function measureExecutionTime(name, fn) {
 }
 async function run() {
     try {
-        const githubToken = process.env.GITHUB_TOKEN;
+        const githubToken = core.getInput('github-token');
         const repository = process.env.GITHUB_REPOSITORY;
         if (!githubToken) {
             throw new Error('GITHUB_TOKEN is not set.');

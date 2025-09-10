@@ -2,6 +2,13 @@ name: 'Repository Archive Action'
 description: 'Clones the current repository with --mirror, creates a tar archive, and compresses it with zstd.'
 author: 'Your Name'
 
+
+inputs:
+  github-token:
+    description: 'GitHub token for authentication'
+    required: true
+    default: ${{ github.token }}
+    
 runs:
   using: 'node20'
   main: 'dist/index.js'
